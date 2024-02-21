@@ -1,6 +1,7 @@
 import { useState , useEffect} from 'react'
 import axios from 'axios'
 import personService from '../services/persons'
+import './index.css'
 
 const Filter = (props) => {
   return(
@@ -44,12 +45,24 @@ const Persons = ({persons, filterWith, onDelete}) => {
   )
 }
 
+const Notification = ({message}) => {
+  if (message === null) {
+    return null
+  }
+  return(
+    <div>
+      <p className='alertNotification'>{message}</p>
+    </div>
+  )
+}
+
 
 const App = () => {
   const [persons, setPersons] = useState([])
   const [newName, setNewName] = useState('')
   const [newNumber, setNewNumber] = useState('')
   const [filterWith, setFilterWith] = useState('')
+  const [alertMessage, setAlterMessage] = useState(null)
 
   const hook = () => {
     personService.getALL().then(initalPerson => setPersons(initalPerson))
@@ -69,25 +82,33 @@ const App = () => {
     for (const person of persons) {
       if (person.name === newNameObject.name) {
         if (confirm(`${newName} is already added to phonebook, replace the ole number with a new one?`)) {
-          console.log(`Change ${person.name}`)
           personService
             .update(person.id, newNameObject)
             .then(returnedPerson => {
-              console.log(returnedPerson)
               setPersons(persons.map(p=> (p.id !== returnedPerson.id) ? p : returnedPerson))
               setNewName('')
               setNewNumber('')
+              setAlterMessage(`Changed ${returnedPerson.name}`)
+              setTimeout(() => {
+                setAlterMessage(null)
+              }, 5000);
             })
         }
         return 0
       }
     }
 
-    personService.create(newNameObject).then(returnedPerson=>{
-      setPersons(persons.concat(returnedPerson))
-      setNewName('')
-      setNewNumber('')
-    })
+    personService
+      .create(newNameObject)
+      .then(returnedPerson=>{
+        setPersons(persons.concat(returnedPerson))
+        setNewName('')
+        setNewNumber('')
+        setAlterMessage(`Added ${returnedPerson.name}`)
+        setTimeout(() => {
+          setAlterMessage(null)
+        }, 5000);
+      })
   }
 
   const handleNameChange = (event) => {
@@ -125,6 +146,7 @@ const App = () => {
   return (
     <div>
       <h2>Phonebook</h2>
+      <Notification message={alertMessage}/>
       <Filter value={filterWith} onChange={handleFilterChange}/>
       <h2>Add a new</h2>
       <PersonForm items={formItems} buttonClick={addName}/>

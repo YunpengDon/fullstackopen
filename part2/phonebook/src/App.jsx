@@ -46,14 +46,24 @@ const Persons = ({persons, filterWith, onDelete}) => {
 }
 
 const Notification = ({message}) => {
-  if (message === null) {
+  if (message.text === null) {
     return null
   }
-  return(
-    <div>
-      <p className='alertNotification'>{message}</p>
-    </div>
-  )
+  if (message.type === 'info') {
+    return(
+      <div>
+        <p className='alertNotification'>{message.text}</p>
+      </div>
+    )
+  }
+  if (message.type === 'error'){
+    return(
+      <div>
+        <p className='errorNotification'>{message.text}</p>
+      </div>
+    )
+  }
+  
 }
 
 
@@ -62,7 +72,12 @@ const App = () => {
   const [newName, setNewName] = useState('')
   const [newNumber, setNewNumber] = useState('')
   const [filterWith, setFilterWith] = useState('')
-  const [alertMessage, setAlterMessage] = useState(null)
+
+  const defaultAlertMessage = {
+    text: null,
+    type: 'info'
+  }
+  const [alertMessage, setAlterMessage] = useState(defaultAlertMessage)
 
   const hook = () => {
     personService.getALL().then(initalPerson => setPersons(initalPerson))
@@ -88,9 +103,18 @@ const App = () => {
               setPersons(persons.map(p=> (p.id !== returnedPerson.id) ? p : returnedPerson))
               setNewName('')
               setNewNumber('')
-              setAlterMessage(`Changed ${returnedPerson.name}`)
+              setAlterMessage({...defaultAlertMessage, text: `Changed ${returnedPerson.name}`})
               setTimeout(() => {
-                setAlterMessage(null)
+                setAlterMessage(defaultAlertMessage)
+              }, 5000);
+            })
+            .catch(error=>{
+              setAlterMessage({
+                text: `Information of ${person.name} has already been removed from server`,
+                type: 'error'
+              })
+              setPersons(persons.filter(n=> n.id !== person.id))
+              setTimeout(() => {setAlterMessage(defaultAlertMessage)
               }, 5000);
             })
         }
@@ -104,9 +128,9 @@ const App = () => {
         setPersons(persons.concat(returnedPerson))
         setNewName('')
         setNewNumber('')
-        setAlterMessage(`Added ${returnedPerson.name}`)
+        setAlterMessage({...defaultAlertMessage, text: `Added ${returnedPerson.name}`})
         setTimeout(() => {
-          setAlterMessage(null)
+          setAlterMessage(defaultAlertMessage)
         }, 5000);
       })
   }
